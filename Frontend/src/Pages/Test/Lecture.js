@@ -7,8 +7,12 @@ export default function Lecture({ onCompletion }) {
   const [lectureStarted, setLectureStarted] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [audioTimer, setAudioTimer] = useState(0);
+  const [textTimer, setTextTimer] = useState(0); // New state for text timer
   const [paragraphs, setParagraphs] = useState([]);
   const [mode, setMode] = useState("audio"); // State to track the current mode (audio or text)
+  const [isPaused, setIsPaused] = useState(false); // New state to track pause status
+  const [audioTimes, setAudioTimes] = useState([0, 0, 0, 0, 0]); // Array to track individual audio times
+  const [textTimes, setTextTimes] = useState([0, 0, 0, 0, 0]); // Array to track individual text times
   const dispatch = useDispatch();
   const speechSynthesisRef = useRef(window.speechSynthesis);
   const playButtonRef = useRef(null);
@@ -54,9 +58,29 @@ export default function Lecture({ onCompletion }) {
       setAudioPlayEvents((prevEvents) => [...prevEvents, `play - ${audioTimer / 1000}s`]);
     };
     utterance.onend = () => {
-      setAudioTimer((prev) => prev + text.length * 50); // Approximate speech time
+      setAudioTimer((prev) => {
+        const newTime = prev + text.length * 50; // Approximate speech time
+        updateAudioTime(newTime);
+        return newTime;
+      });
     };
     speechSynthesisRef.current.speak(utterance);
+  };
+
+  const updateAudioTime = (time) => {
+    setAudioTimes((prevTimes) => {
+      const updatedTimes = [...prevTimes];
+      updatedTimes[currentPage] += time - audioTimer;
+      return updatedTimes;
+    });
+  };
+
+  const updateTextTime = () => {
+    setTextTimes((prevTimes) => {
+      const updatedTimes = [...prevTimes];
+      updatedTimes[currentPage] += 1000;
+      return updatedTimes;
+    });
   };
 
   const handlePlayButtonClick = () => {
@@ -68,9 +92,13 @@ export default function Lecture({ onCompletion }) {
     const currentText = paragraphs[currentPage]?.para;
 
     if (speechSynthesisRef.current.speaking) {
-      speechSynthesisRef.current.resume();
-    } else if (speechSynthesisRef.current.paused) {
-      speechSynthesisRef.current.resume();
+      if (isPaused) {
+        speechSynthesisRef.current.resume();
+        setIsPaused(false);
+      } else {
+        speechSynthesisRef.current.pause();
+        setIsPaused(true);
+      }
     } else {
       speakText(currentText);
     }
@@ -128,10 +156,11 @@ export default function Lecture({ onCompletion }) {
 
   const endLecture = () => {
     const totalTimeTaken = audioTimer / 1000;
+    const totalTextTime = textTimer / 1000;
     dispatch(
       updateLectureInfo(
         audioTimer / 1000, // audioTime
-        0, // textTime (assuming it's not used in this version)
+        textTimer / 1000, // textTime
         totalTimeTaken,
         audioPlayEvents
       )
@@ -139,22 +168,49 @@ export default function Lecture({ onCompletion }) {
     onCompletion(totalTimeTaken);
     setLectureStarted(false);
     setAudioTimer(0);
+    setTextTimer(0);
     speechSynthesisRef.current.cancel();
   };
 
   useEffect(() => {
-    if (mode === "text") {
-      const interval = setInterval(() => {
-        setAudioTimer((prev) => prev + 1000);
-      }, 1000);
+    let interval;
 
-      return () => clearInterval(interval);
+    if (lectureStarted && !isPaused) {
+      interval = setInterval(() => {
+        if (mode === "audio") {
+          setAudioTimer((prev) => {
+            updateAudioTime(prev + 1000);
+            return prev + 1000;
+          });
+        } else {
+          setTextTimer((prev) => {
+            updateTextTime();
+            return prev + 1000;
+          });
+        }
+      }, 1000);
     }
-  }, [mode]);
+
+    return () => clearInterval(interval);
+  }, [lectureStarted, isPaused, mode]);
+
+  const renderTimeDisplay = () => (
+    <div className="time-display">
+      <h4>Total Audio Time: {Math.floor(audioTimer / 1000)}s</h4>
+      {audioTimes.map((time, index) => (
+        <p key={index}>Audio {index + 1} Time: {Math.floor(time / 1000)}s</p>
+      ))}
+      <h4>Total Text Time: {Math.floor(textTimer / 1000)}s</h4>
+      {textTimes.map((time, index) => (
+        <p key={index}>Text {index + 1} Time: {Math.floor(time / 1000)}s</p>
+      ))}
+    </div>
+  );
 
   return (
     <div className="mx-auto py-4 px-8">
       <h2 className="text-2xl font-semibold">Lecture</h2>
+      {renderTimeDisplay()} {/* Display the times */}
       <div className="mt-4">
         {!lectureStarted ? (
           <div>
@@ -191,8 +247,7 @@ export default function Lecture({ onCompletion }) {
                       cursor: "pointer",
                     }}
                   >
-                    {speechSynthesisRef.current.paused ||
-                    !speechSynthesisRef.current.speaking
+                    {isPaused || !speechSynthesisRef.current.speaking
                       ? "▶"
                       : "⏸"}
                   </button>
