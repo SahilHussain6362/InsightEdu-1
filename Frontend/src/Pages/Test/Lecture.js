@@ -66,9 +66,31 @@ export default function Lecture({ onCompletion }) {
           setAudioTimer((prev) => prev + 1000);
           setTotalTimer((prev) => prev + 1000);
         }, 1000);
-      }
+        return () => clearInterval(interval);
+      } 
     }
-  })
+    if(mode === "text"){
+      setIsSpeaking(false);
+      let interval = setInterval(() => {
+        setPageText((prevPageAudio) => {
+          return prevPageAudio.map((curAudio) => {
+            if (curAudio.id !== currentPage) {
+              return curAudio; // Return unchanged if not the current page's audio
+            } else {
+              // Return updated audio with incremented 'val'
+              return {
+                ...curAudio,
+                val: curAudio.val + 1000,
+              };
+            }
+          });
+        });
+        setTextTimer((prev) => prev + 1000);
+        setTotalTimer((prev) => prev + 1000);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [mode, isSpeaking]);
 
   const handleFetchParagraphs = async () => {
     try {
@@ -208,16 +230,6 @@ export default function Lecture({ onCompletion }) {
     speechSynthesisRef.current.cancel();
   };
 
-  useEffect(() => {
-    if (mode === "text") {
-      const interval = setInterval(() => {
-        setAudioTimer((prev) => prev + 1000);
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [mode]);
-
   return (
     <div className="mx-auto py-4 px-8">
       <h2 className="text-2xl font-semibold">Lecture</h2>
@@ -271,20 +283,36 @@ export default function Lecture({ onCompletion }) {
                 </div>
                 <div>
                   <div>
-                    {paragraphs[currentPage] && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "4rem",
-                          right: 0,
-                          padding: "0.5rem",
-                          backgroundColor: "rgba(255, 255, 255, 0.8)",
-                          borderRadius: "0 0 0.25rem 0.25rem",
-                        }}
-                      >
-                        Audio Time: {Math.floor(audioTimer / 1000)}s
-                      </div>
+                    {pageAudio.map(
+                      (curPage) =>
+                        curPage.id === currentPage && (
+                          <div
+                            key={curPage.id} // Add a unique key when iterating over arrays in React
+                            style={{
+                              position: "absolute",
+                              top: "4rem",
+                              right: 0,
+                              padding: "0.5rem",
+                              backgroundColor: "rgba(255, 255, 255, 0.8)",
+                              borderRadius: "0 0 0.25rem 0.25rem",
+                            }}
+                          >
+                            Audio {currentPage+1} Time: {Math.floor(curPage.val / 1000)}s
+                          </div>
+                        )
                     )}
+                  </div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      padding: "0.5rem",
+                      backgroundColor: "rgba(255, 255, 255, 0.8)",
+                      borderRadius: "0 0 0.25rem 0.25rem",
+                    }}
+                  >
+                    Audio Time: {Math.floor(audioTimer / 1000)}s
                   </div>
                 </div>
                 <div className="mt-2">
@@ -295,6 +323,7 @@ export default function Lecture({ onCompletion }) {
                     Text Mode
                   </button>
                 </div>
+                
               </div>
             ) : (
               <div>
@@ -304,6 +333,37 @@ export default function Lecture({ onCompletion }) {
                 <br />
                 <p>{paragraphs[currentPage]?.para}</p>
                 <div className="mt-2">
+                  {pageText.map(
+                    (curPage) =>
+                      curPage.id === currentPage && (
+                        <div
+                          key={curPage.id} // Add a unique key when iterating over arrays in React
+                          style={{
+                            position: "absolute",
+                            top: "4rem",
+                            right: 0,
+                            padding: "0.5rem",
+                            backgroundColor: "rgba(255, 255, 255, 0.8)",
+                            borderRadius: "0 0 0.25rem 0.25rem",
+                          }}
+                        >
+                          Paragraph {currentPage+1} Time: {Math.floor(curPage.val / 1000)}s
+                        </div>
+                      )
+                  )}
+                  <div
+                        className="text-time-container"
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          right: 0,
+                          padding: "0.5rem",
+                          backgroundColor: "rgba(255, 255, 255, 0.8)",
+                          borderRadius: "0 0 0.25rem 0.25rem",
+                        }}
+                      >
+                        Text Time: {Math.floor(textTimer / 1000)}s
+                  </div>
                   <button
                     onClick={toggleMode}
                     className="bg-white text-black py-2 px-4 rounded hover:bg-gray-400 border-[1px] border-black transition duration-300"
