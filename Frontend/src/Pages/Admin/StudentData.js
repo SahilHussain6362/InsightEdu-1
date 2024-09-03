@@ -6,7 +6,7 @@ import BeatLoader from "react-spinners/BeatLoader";
 
 export default function Admin() {
   const { data, loading, error } = useGoogleSheets({
-    apiKey: 'AIzaSyD5dCwwaPh7I4Rbqc-fSOKiwmPtJrLcHmQ',
+    apiKey: 'AIzaSyC8nFH4nDKEpn24vbh8koGWu2mAbuqSfMc',
     sheetId: '1otnCxVm1SUAkGvdThkxi3qxjnKOHnfRCYrxAWv5jD40',
   });
 

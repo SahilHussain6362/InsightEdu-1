@@ -6,7 +6,7 @@ import BeatLoader from "react-spinners/BeatLoader";
 
 export default function Admin() {
   const { data, loading, error } = useGoogleSheets({
-    apiKey: 'AIzaSyD5dCwwaPh7I4Rbqc-fSOKiwmPtJrLcHmQ',
+    apiKey: 'AIzaSyC8nFH4nDKEpn24vbh8koGWu2mAbuqSfMc',
     sheetId: '1otnCxVm1SUAkGvdThkxi3qxjnKOHnfRCYrxAWv5jD40',
   });
 
@@ -223,7 +223,7 @@ const handleAddParagraph = async (e) => {
           <div className="text-3xl font-semibold pb-5">
             Question Management
             <a
-              href='https://docs.google.com/spreadsheets/d/1j1I1ozIgmnSRMKc3m-IkLnAfDGfdjzIxyw29IzRlC10/edit?usp=sharing'
+              href='https://docs.google.com/spreadsheets/d/1otnCxVm1SUAkGvdThkxi3qxjnKOHnfRCYrxAWv5jD40/edit?gid=0#gid=0'
               className="text-blue-500 text-lg ml-5"
               target="_blank"
               rel="noopener noreferrer"
@@ -373,7 +373,7 @@ const handleAddParagraph = async (e) => {
               </div>
             </div>
           )}
-          {dataType === "Table" && (
+          {/* {dataType === "Table" && (
             <div className="pt-5">
               <p className="text-2xl font-semibold">Table Data</p>
               <table className="table-auto border-collapse border border-black">
@@ -393,7 +393,7 @@ const handleAddParagraph = async (e) => {
                 <tbody>{tableData}</tbody>
               </table>
             </div>
-          )}
+          )} */}
         </div>
       )}
     </div>
